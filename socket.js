@@ -1,7 +1,9 @@
 var net = require('net');
 var crypto = require('crypto'),
     md5 = crypto.createHash('md5');
+var so=[];
 var server = net.createServer(function (c) { //'connection' listener
+    so.push(c);
     console.log('server connected');
     c.on('end', function () {
         console.log('server disconnected');
@@ -74,6 +76,7 @@ var server = net.createServer(function (c) { //'connection' listener
     //var key= c.headers['sec-websocket-key'];
     // console.dir(c);
     //   console.log(key);
+
     c.on('data', function (data) {
 
         var aa = data.toString();
@@ -96,8 +99,10 @@ var server = net.createServer(function (c) { //'connection' listener
         }else{
            var aaa = build_msg('asdasd');
 
-           
-            c.write(aaa);
+
+          so.forEach(function(item){
+              item.write(aaa);
+          })
         }
 
     })
