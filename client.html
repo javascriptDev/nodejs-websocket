@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+
+</head>
+<body>
+
+
+<script>
+    var  wsServer = 'ws://127.0.0.1:8888';
+    var  websocket = new WebSocket(wsServer);
+    websocket.onopen = function (evt) { onOpen(evt) };
+    websocket.onclose = function (evt) { onClose(evt) };
+    websocket.onmessage = function (evt) { onMessage(evt) };
+    websocket.onerror = function (evt) { onError(evt) };
+    function onOpen(evt) {
+        console.log("Connected to WebSocket server.");
+        var buffer = new ArrayBuffer(12);
+        var dataView = new DataView(buffer);
+
+        dataView.setInt32(0, 0x1234ABCD);
+        websocket.send(dataView);
+    }
+    function onClose(evt) {
+        console.log("Disconnected");
+    }
+    function onMessage(evt) {
+
+        console.log('Retrieved data from server:'+evt.data);
+    }
+    function onError(evt) {
+        console.dir(evt);
+    }
+
+
+
+</script>
+</body>
+</html>
