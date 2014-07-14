@@ -17,10 +17,11 @@
     websocket.onerror = function (evt) { onError(evt) };
     function onOpen(evt) {
         console.log("Connected to WebSocket server.");
-        var buffer = new ArrayBuffer(12);
-        var dataView = new DataView(buffer);
-
-        dataView.setInt32(0, 0x1234ABCD);
+//        var buffer = new ArrayBuffer(12);
+//        var dataView = new DataView(buffer);
+//
+//        dataView.setInt32(0, 0x1234ABCD);
+        dataView='高';
         websocket.send(dataView);
     }
     function onClose(evt) {
