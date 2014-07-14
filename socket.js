@@ -123,7 +123,7 @@ var server = net.createServer(function (socket) { //'connection' listener
                     payLoadData[i] = payLoadData[i] ^ mask[i % 4];
                 }
 
-                console.log(payLoadData);
+                console.log(payLoadData.toString('utf-8'));
 
                 so.forEach(function (item) {
                     if (!item.destroyed) {
