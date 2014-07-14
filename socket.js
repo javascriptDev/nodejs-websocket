@@ -34,37 +34,6 @@ function build_msg(str_msg, mask) {
 
     return packed_data;
 }
-function parse_msg(data) {
-    data = data || null;
-    if (( data.length <= 0 ) || ( !Buffer.isBuffer(data) )) {
-        return null;
-    }
-
-
-    var mask_flag = (data[1] & 0x80 == 0x80) ? 1 : 0;
-    var payload_len = data[1] & 0x7F;//0111 1111
-
-    if (payload_len == 126) {
-        masks = data.slice(4, 8);
-        payload_data = data.slice(8);
-        payload_len = data.readUInt16BE(2);
-    } else if (payload_len == 127) {
-        masks = data.slice(10, 14);
-        payload_data = data.slice(14);
-        payload_len = data.readUInt32BE(2) * Math.pow(2, 32) + data.readUInt32BE(6);
-    } else {
-        masks = data.slice(2, 6);
-        payload_data = data.slice(6);
-        console.log(masks);
-    }
-    //console.log(payload_len);
-    //console.log(payload_data.length);
-    for (var i = 0; i < payload_len; i++) {
-        payload_data[i] = payload_data[i] ^ masks[i % 4];
-    }
-
-    return payload_data;
-}
 
 var server = net.createServer(function (socket) { //'connection' listener
     // socket.setEncoding('utf8');
@@ -148,8 +117,8 @@ var server = net.createServer(function (socket) { //'connection' listener
 
                 }
 
-                console.log(payLoadData);
-                console.log(mask);
+
+                //解除屏蔽
                 for (var i = 0; i < payloadLen; i++) {
                     payLoadData[i] = payLoadData[i] ^ mask[i % 4];
                 }
