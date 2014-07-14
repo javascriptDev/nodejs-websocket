@@ -78,7 +78,6 @@ var server = net.createServer( function( socket ) { //'connection' listener
 			socket.write( s );
 		} else {
 
-			var aaa = build_msg( 'asdasd' );
 
 //            0                   1                   2                   3
 //            0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -129,11 +128,14 @@ var server = net.createServer( function( socket ) { //'connection' listener
 					payLoadData[i] = payLoadData[i] ^ mask[i % 4];
 				}
 
-				console.log( payLoadData.toString() );
+				var text= payLoadData.toString();
+				console.log( 'client data -->'+text );
 
 				so.forEach( function( item ) {
 					if(!item.destroyed) {
-						item.write( aaa );
+						var tex = build_msg(text);
+
+						item.write(tex);
 					}
 				} )
 			}
