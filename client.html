@@ -3,40 +3,159 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
+    <style type="text/css">
+        #friend div:nth-child(even) {
+            background: gainsboro;
+        }
 
+        #friend div {
+            border: 1px solid red;
+        }
+    </style>
 </head>
 <body>
+<div id="msg" style="height: 300px;width:400px;border: 1px solid red;float: left;">
 
+</div>
+<div id="friend" style="height: 500px;width:200px;border: 1px solid green; float: right;">
+
+</div>
+
+
+<input type="text" id="text">
+<button id="send">发送</button>
 
 <script>
-    var  wsServer = 'ws://127.0.0.1:8888';
-    var  websocket = new WebSocket(wsServer);
-    websocket.onopen = function (evt) { onOpen(evt) };
-    websocket.onclose = function (evt) { onClose(evt) };
-    websocket.onmessage = function (evt) { onMessage(evt) };
-    websocket.onerror = function (evt) { onError(evt) };
-    function onOpen(evt) {
-        console.log("Connected to WebSocket server.");
+
+    var msgType = {
+        login: 'login',
+        msg: 'msg',
+        initFriend: 'initFriend',
+        close: 'close'
+    }
+    function delCookie(name) {//为了删除指定名称的cookie，可以将其过期时间设定为一个过去的时间
+        var date = new Date();
+        date.setTime(date.getTime() - 10000);
+        document.cookie = name + "=a; expires=" + date.toGMTString();
+    }
+
+    function get_id() {
+        var id;
+        document.cookie.split(';').forEach(function (item) {
+            var key = item.split('=');
+            if (key[0].indexOf('_id') != -1) {
+                id = key[1];
+            }
+        })
+        return id;
+    }
+    window.onload = function () {
+
+
+        var id = get_id();
+        var friend = document.querySelector('#friend');
+
+
+        var wsServer = 'ws://127.0.0.1:1337';
+        var websocket = new WebSocket(wsServer);
+        websocket.onopen = function (evt) {
+            onOpen(evt)
+        };
+        websocket.onclose = function (evt) {
+            onClose(evt)
+        };
+        websocket.onmessage = function (evt) {
+            onMessage(evt)
+        };
+        websocket.onerror = function (evt) {
+            onError(evt)
+        };
+        var msgType = {
+            login: 'login',
+            msg: 'msg',
+            initFriend: 'initFriend',
+            close: 'close'
+        }
+
+        function onOpen(evt) {
+            console.log("Connected to WebSocket server.");
 //        var buffer = new ArrayBuffer(12);
 //        var dataView = new DataView(buffer);
 //
 //        dataView.setInt32(0, 0x9ad8);
 //     //   dataView='高';
-        websocket.send("阿斯达岁的");
-    }
-    function onClose(evt) {
-        console.log("Disconnected");
-    }
-    function onMessage(evt) {
 
-        console.log('Retrieved data from server:'+evt.data);
+            var o = {
+                id: get_id(),
+                type: msgType.login
+            }
+            console.log(o);
+            websocket.send(JSON.stringify(o));
+        }
+
+        function onClose(evt) {
+            console.log("Disconnected");
+        }
+
+        function onMessage(evt) {
+            var data = JSON.parse(evt.data);
+
+            if (data.type == msgType.login) {///处理登录
+
+                friend.innerHTML += ('<div>' + data.id + '</div>');
+
+            } else if (data.type == msgType.msg) {
+                var text = data.text,
+                        from = data.sid;
+                document.querySelector('#msg').innerHTML += (from + ':' + text);
+            } else if (data.type == msgType.initFriend) {
+                data.data.forEach(function (item) {
+                    console.log(friend);
+                    friend.innerHTML += ('<div>' + item + '</div>');
+                })
+            }
+        }
+
+        function onError(evt) {
+            console.dir(evt);
+        }
+
+
+        friend.onclick = function (e) {
+            e.target.className='a';
+            e.target.style.background = 'red';
+            e.target.style.color = 'white';
+        }
+
+
+        var a = {id: ''};
+        var btn = document.querySelector('#send');
+
+
+        btn.onclick = function () {
+            var val = document.querySelector('#text').value;
+            var obj = {
+                id: id,
+                did: document.querySelector('.a').innerHTML,
+                text: val,
+                type:msgType.msg
+            }
+            console.log(obj)
+            websocket.send(JSON.stringify(obj));
+        }
+
+
     }
-    function onError(evt) {
-        console.dir(evt);
+    window.onunload = function () {
+        // delCookie('_id');
+        console.log(document.cookie);
+        // delCookie('_id');
+        console.log(document.cookie);
+        websocket.send(JSON.stringify({
+            id: get_id(),
+            type: msgType.close
+        }));
     }
-
-
-
 </script>
 </body>
 </html>
