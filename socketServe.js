@@ -127,6 +127,7 @@ websocket.on('upgrade', function (req, socket, head) {
             for (var i = 0; i < payloadLen; i++) {
                 payLoadData[i] = payLoadData[i] ^ mask[i % 4];
             }
+             //真正数据 第一个字符和第一个掩码异或。。以此类推
             console.log(payLoadData.toString());
 
             var text;
