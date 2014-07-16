@@ -55,7 +55,7 @@ var websocket = http.createServer(function (req, res) {
 
 });
 websocket.on('upgrade', function (req, socket, head) {
-
+    console.log('connect');
 //    console.dir(socket);
     var key = req.headers['sec-websocket-key'].replace(/(^\s+)|(\s+$)/g, '');
     var shasum = crypto.createHash('sha1');
@@ -80,7 +80,6 @@ websocket.on('upgrade', function (req, socket, head) {
 
 
     socket.on('end', function () {
-        console.dir(socket);
         console.log('disconnect');
     });
     var targetSocket = [];
@@ -146,21 +145,20 @@ websocket.on('upgrade', function (req, socket, head) {
                     data: ids,
                     type: msgType.initFriend
 
-                })),function(){
+                })), function () {
                     ids.push(sid);
+                    console.log(ids);
                 })
 
 
                 so.push({
-                    _id:sid,
-                    socket:socket
+                    _id: sid,
+                    socket: socket
                 })
 
                 so.forEach(function (item) {
                     //告知所有在线用户之后，内存中保存刚才登录的用户
-                    console.log(item._id+"---"+sid);
                     if (item && (item._id != sid)) {
-                        console.log('send');
                         item.socket.write(buildSendMsg(JSON.stringify({
                             type: msgType.login,
                             id: sid
@@ -178,23 +176,32 @@ websocket.on('upgrade', function (req, socket, head) {
                 });
 
                 so.forEach(function (item) {
-                    console.log(item._id + ":" + did);
+//                    console.log(item._id + ":" + did);
                     if (item._id == did) {
-                      item.socket.write(buildSendMsg(msg));
+                        item.socket.write(buildSendMsg(msg));
                     }
                 })
             }
             else if (messageType == msgType.close) {
                 //删除 ids保存client id
-                ids = ids.filter(function (item) {
-                    item != sid;
-                })
+                ids.forEach(function(item,index){
+                    if(item==sid){
+                        ids.splice(index,1);
+                    }
+                });
                 //删除 保存的socket
                 so.forEach(function (item, index) {
+                    console.log(item._id+':'+sid);
                     if (item._id == sid) {
                         so.splice(index, 1);
+                    }else{
+                       item.socket.write(buildSendMsg(JSON.stringify({
+                           sid:sid,
+                           type:msgType.close
+                       })))
                     }
                 })
+                console.log(ids);
                 socket.end();
             }
         }

@@ -119,6 +119,14 @@
                 console.log(friend);
                 friend.innerHTML += ('<div>' + item + '</div>');
             })
+        }else if(data.type==msgType.close){
+            console.log('other is close');
+            console.log(data);
+            Array.prototype.forEach.call(friend.querySelectorAll('div'),function(item){
+                if(item.innerHTML==data.sid){
+                    item.parentNode.removeChild(item);
+                }
+            })
         }
     }
 
