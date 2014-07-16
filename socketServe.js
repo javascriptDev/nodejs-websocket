@@ -68,17 +68,7 @@ websocket.on('upgrade', function (req, socket, head) {
             'Sec-WebSocket-Accept:' + key
     ];
     var s = headers.concat('', '').join('\r\n');
-
-    socket.write(s, 'binary', function () {
-//        so.push({
-//            _id: id,
-//            socket: socket
-//        });
-//        ids.push(id);
-//        console.log(so);
-    });
-
-
+    socket.write(s);
     socket.on('end', function () {
         console.log('disconnect');
     });
@@ -114,16 +104,19 @@ websocket.on('upgrade', function (req, socket, head) {
             //payloadlen 7bytes 7+16bits(126)2bytes 7+64bits(127)
 
             if (payloadLen < 126) {
+                console.log('<126');
                 mask = data.slice(2, 6);
                 payLoadData = data.slice(6);
             } else if (payloadLen == 126) {
+                console.log('=126')
                 //126 的时候 payloadlength 延长至 7+16bits。所以masking
-                mask = data.slice(6, 10); //(6= 4+2 )
-                payLoadData = data.slice(10);
+                mask = data.slice(4, 8); //(6= 4+2 )
+                payLoadData = data.slice(8);
                 payloadLen = data.readUInt16BE(2);
             } else if (payloadLen == 127) {
-                mask = data.slice(10, 14);// (10=2+8)
-                payLoadData = data.slice(14);
+                console.log('=127');
+                mask = data.slice(8,12);// (10=2+8)
+                payLoadData = data.slice(12);
                 payloadLen = data.readUinit64BE(2);
             }
 
@@ -132,7 +125,7 @@ websocket.on('upgrade', function (req, socket, head) {
             for (var i = 0; i < payloadLen; i++) {
                 payLoadData[i] = payLoadData[i] ^ mask[i % 4];
             }
-
+            console.log(payLoadData.toString());
             var text = JSON.parse(payLoadData.toString());
 
             var messageType = text.type;
@@ -201,11 +194,11 @@ websocket.on('upgrade', function (req, socket, head) {
                        })))
                     }
                 })
-                console.log(ids);
                 socket.end();
             }
         }
     });
+
     socket.on('error', function (error) {
         console.log('******* ERROR ' + error + ' *******');
 
