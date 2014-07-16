@@ -11,8 +11,10 @@
         #friend div {
             border: 1px solid red;
         }
-        .a{
-            background: red;color: white;
+
+        .a {
+            background: red;
+            color: white;
         }
     </style>
 </head>
@@ -96,12 +98,15 @@
         }
         console.log(o);
         websocket.send(JSON.stringify(o));
+        setInterval(function () {
+            if (websocket.bufferedAmount == 0) {//bufferedAmount 为连接缓冲使用
+                websocket.send('~H#C~');
+            }
+        }, 10000)
     }
-
     function onClose(evt) {
         console.log("Disconnected");
     }
-
     function onMessage(evt) {
         var data = JSON.parse(evt.data);
         if (data.type == msgType.login) {///处理登录
@@ -119,11 +124,11 @@
                 console.log(friend);
                 friend.innerHTML += ('<div>' + item + '</div>');
             })
-        }else if(data.type==msgType.close){
+        } else if (data.type == msgType.close) {
             console.log('other is close');
             console.log(data);
-            Array.prototype.forEach.call(friend.querySelectorAll('div'),function(item){
-                if(item.innerHTML==data.sid){
+            Array.prototype.forEach.call(friend.querySelectorAll('div'), function (item) {
+                if (item.innerHTML == data.sid) {
                     item.parentNode.removeChild(item);
                 }
             })
@@ -136,7 +141,7 @@
 
 
     friend.onclick = function (e) {
-        document.querySelector('.a')&&(document.querySelector('.a').className='');
+        document.querySelector('.a') && (document.querySelector('.a').className = '');
         e.target.className = 'a';
 
     }
@@ -158,11 +163,13 @@
     }
 
 
-    window.onunload = function () {
+    window.onunload = function (e) {
+        setTimeout(function () {
+        }, 10000);
         console.log(document.cookie);
         // delCookie('_id');
         console.log(document.cookie);
-        var o={
+        var o = {
             sid: global.id,
             type: msgType.close
         };

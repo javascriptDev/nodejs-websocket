@@ -2,6 +2,7 @@
  * Created by a2014 on 14-7-15.
  */
 var http = require('http');
+var util = require('./util').util;
 
 var crypto = require('crypto'),
     md5 = crypto.createHash('md5');
@@ -54,6 +55,7 @@ function buildSendMsg(str_msg, mask) {
 var websocket = http.createServer(function (req, res) {
 
 });
+
 websocket.on('upgrade', function (req, socket, head) {
     console.log('connect');
 //    console.dir(socket);
@@ -115,7 +117,7 @@ websocket.on('upgrade', function (req, socket, head) {
                 payloadLen = data.readUInt16BE(2);
             } else if (payloadLen == 127) {
                 console.log('=127');
-                mask = data.slice(8,12);// (10=2+8)
+                mask = data.slice(8, 12);// (10=2+8)
                 payLoadData = data.slice(12);
                 payloadLen = data.readUinit64BE(2);
             }
@@ -126,8 +128,15 @@ websocket.on('upgrade', function (req, socket, head) {
                 payLoadData[i] = payLoadData[i] ^ mask[i % 4];
             }
             console.log(payLoadData.toString());
-            var text = JSON.parse(payLoadData.toString());
 
+            var text;
+            try {
+                text = JSON.parse(payLoadData.toString());
+            }
+            catch (e) {
+                console.log(e.message);
+                text = payLoadData.toString();
+            }
             var messageType = text.type;
             var sid = text.sid; //client id
 
@@ -177,21 +186,21 @@ websocket.on('upgrade', function (req, socket, head) {
             }
             else if (messageType == msgType.close) {
                 //删除 ids保存client id
-                ids.forEach(function(item,index){
-                    if(item==sid){
-                        ids.splice(index,1);
+                ids.forEach(function (item, index) {
+                    if (item == sid) {
+                        ids.splice(index, 1);
                     }
                 });
                 //删除 保存的socket
                 so.forEach(function (item, index) {
-                    console.log(item._id+':'+sid);
+                    console.log(item._id + ':' + sid);
                     if (item._id == sid) {
                         so.splice(index, 1);
-                    }else{
-                       item.socket.write(buildSendMsg(JSON.stringify({
-                           sid:sid,
-                           type:msgType.close
-                       })))
+                    } else {
+                        item.socket.write(buildSendMsg(JSON.stringify({
+                            sid: sid,
+                            type: msgType.close
+                        })))
                     }
                 })
                 socket.end();
