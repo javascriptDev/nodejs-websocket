@@ -11,6 +11,9 @@
         #friend div {
             border: 1px solid red;
         }
+        .a{
+            background: red;color: white;
+        }
     </style>
 </head>
 <body>
@@ -27,16 +30,17 @@
 
 <script>
 
-    var msgType = {
-        login: 'login',
-        msg: 'msg',
-        initFriend: 'initFriend',
-        close: 'close'
+    Math.uuid = function () {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
     function delCookie(name) {//为了删除指定名称的cookie，可以将其过期时间设定为一个过去的时间
         var date = new Date();
         date.setTime(date.getTime() - 10000);
         document.cookie = name + "=a; expires=" + date.toGMTString();
+        document.cookie = "";
     }
 
     function get_id() {
@@ -49,112 +53,112 @@
         })
         return id;
     }
-    window.onload = function () {
+
+    var id = get_id();
+    var friend = document.querySelector('#friend');
 
 
-        var id = get_id();
-        var friend = document.querySelector('#friend');
+    var wsServer = 'ws://192.168.166.108:1338';
+    var websocket = new WebSocket(wsServer);
+    websocket.onopen = function (evt) {
+        onOpen(evt)
+    };
+    websocket.onclose = function (evt) {
+        onClose(evt)
+    };
+    websocket.onmessage = function (evt) {
+        onMessage(evt)
+    };
+    websocket.onerror = function (evt) {
+        onError(evt)
+    };
+    var msgType = {
+        login: 'login',
+        msg: 'msg',
+        initFriend: 'initFriend',
+        close: 'close'
+    }
 
+    var global = {};
 
-        var wsServer = 'ws://127.0.0.1:1337';
-        var websocket = new WebSocket(wsServer);
-        websocket.onopen = function (evt) {
-            onOpen(evt)
-        };
-        websocket.onclose = function (evt) {
-            onClose(evt)
-        };
-        websocket.onmessage = function (evt) {
-            onMessage(evt)
-        };
-        websocket.onerror = function (evt) {
-            onError(evt)
-        };
-        var msgType = {
-            login: 'login',
-            msg: 'msg',
-            initFriend: 'initFriend',
-            close: 'close'
-        }
-
-        function onOpen(evt) {
-            console.log("Connected to WebSocket server.");
+    function onOpen(evt) {
+        console.log("Connected to WebSocket server.");
 //        var buffer = new ArrayBuffer(12);
 //        var dataView = new DataView(buffer);
 //
 //        dataView.setInt32(0, 0x9ad8);
 //     //   dataView='高';
-
-            var o = {
-                id: get_id(),
-                type: msgType.login
-            }
-            console.log(o);
-            websocket.send(JSON.stringify(o));
+        global.id = Math.uuid();
+        console.dir(evt);
+        var o = {
+            sid: global.id,
+            type: msgType.login
         }
+        console.log(o);
+        websocket.send(JSON.stringify(o));
+    }
 
-        function onClose(evt) {
-            console.log("Disconnected");
+    function onClose(evt) {
+        console.log("Disconnected");
+    }
+
+    function onMessage(evt) {
+        var data = JSON.parse(evt.data);
+        if (data.type == msgType.login) {///处理登录
+
+            friend.innerHTML += ('<div>' + data.id + '</div>');
+
+        } else if (data.type == msgType.msg) {
+            console.log(data);
+            var text = data.text,
+                    from = data.sid;
+            document.querySelector('#msg').innerHTML += (from + ':' + text);
+        } else if (data.type == msgType.initFriend) {
+            console.log(data);
+            data.data.forEach(function (item) {
+                console.log(friend);
+                friend.innerHTML += ('<div>' + item + '</div>');
+            })
         }
+    }
 
-        function onMessage(evt) {
-            var data = JSON.parse(evt.data);
-
-            if (data.type == msgType.login) {///处理登录
-
-                friend.innerHTML += ('<div>' + data.id + '</div>');
-
-            } else if (data.type == msgType.msg) {
-                var text = data.text,
-                        from = data.sid;
-                document.querySelector('#msg').innerHTML += (from + ':' + text);
-            } else if (data.type == msgType.initFriend) {
-                data.data.forEach(function (item) {
-                    console.log(friend);
-                    friend.innerHTML += ('<div>' + item + '</div>');
-                })
-            }
-        }
-
-        function onError(evt) {
-            console.dir(evt);
-        }
+    function onError(evt) {
+        console.dir(evt);
+    }
 
 
-        friend.onclick = function (e) {
-            e.target.className='a';
-            e.target.style.background = 'red';
-            e.target.style.color = 'white';
-        }
-
-
-        var a = {id: ''};
-        var btn = document.querySelector('#send');
-
-
-        btn.onclick = function () {
-            var val = document.querySelector('#text').value;
-            var obj = {
-                id: id,
-                did: document.querySelector('.a').innerHTML,
-                text: val,
-                type:msgType.msg
-            }
-            console.log(obj)
-            websocket.send(JSON.stringify(obj));
-        }
-
+    friend.onclick = function (e) {
+        document.querySelector('.a')&&(document.querySelector('.a').className='');
+        e.target.className = 'a';
 
     }
+
+
+    var btn = document.querySelector('#send');
+
+
+    btn.onclick = function () {
+        var val = document.querySelector('#text').value;
+        var obj = {
+            sid: global.id,
+            did: document.querySelector('.a').innerHTML,
+            text: val,
+            type: msgType.msg
+        }
+        console.log(obj)
+        websocket.send(JSON.stringify(obj));
+    }
+
+
     window.onunload = function () {
-        // delCookie('_id');
         console.log(document.cookie);
         // delCookie('_id');
         console.log(document.cookie);
-        websocket.send(JSON.stringify({
-            id: get_id(),
+        var o={
+            sid: global.id,
             type: msgType.close
-        }));
+        };
+        websocket.send(JSON.stringify(o));
     }
 </script>
 </body>
