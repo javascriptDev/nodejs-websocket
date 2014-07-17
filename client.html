@@ -74,6 +74,8 @@
     websocket.onerror = function (evt) {
         onError(evt)
     };
+
+    //消息类型
     var msgType = {
         login: 'login',
         msg: 'msg',
@@ -81,6 +83,7 @@
         close: 'close'
     }
 
+    //每个客户端的个人信息
     var global = {};
 
     function onOpen(evt) {
@@ -90,14 +93,19 @@
 //
 //        dataView.setInt32(0, 0x9ad8);
 //     //   dataView='高';
+
+        //和客户端连接成功后，发送一个唯一id 给server 便于标示个人信息
         global.id = Math.uuid();
         console.dir(evt);
+
+        //消息类型 & 唯一id
         var o = {
             sid: global.id,
             type: msgType.login
         }
-        console.log(o);
         websocket.send(JSON.stringify(o));
+
+        //发送心跳包,防止 信道空闲时间过长，自动断开
         setInterval(function () {
             if (websocket.bufferedAmount == 0) {//bufferedAmount 为连接缓冲使用
                 websocket.send('~H#C~');
@@ -107,26 +115,22 @@
     function onClose(evt) {
         console.log("Disconnected");
     }
+
     function onMessage(evt) {
         var data = JSON.parse(evt.data);
+
         if (data.type == msgType.login) {///处理登录
-
             friend.innerHTML += ('<div>' + data.id + '</div>');
-
         } else if (data.type == msgType.msg) {
-            console.log(data);
             var text = data.text,
                     from = data.sid;
             document.querySelector('#msg').innerHTML += (from + ':' + text);
         } else if (data.type == msgType.initFriend) {
-            console.log(data);
+            //初始化好友列表
             data.data.forEach(function (item) {
-                console.log(friend);
                 friend.innerHTML += ('<div>' + item + '</div>');
             })
         } else if (data.type == msgType.close) {
-            console.log('other is close');
-            console.log(data);
             Array.prototype.forEach.call(friend.querySelectorAll('div'), function (item) {
                 if (item.innerHTML == data.sid) {
                     item.parentNode.removeChild(item);
@@ -146,29 +150,21 @@
 
     }
 
-
     var btn = document.querySelector('#send');
-
-
     btn.onclick = function () {
         var val = document.querySelector('#text').value;
+        //generate msg object
         var obj = {
-            sid: global.id,
-            did: document.querySelector('.a').innerHTML,
+            sid: global.id, //client 唯一id
+            did: document.querySelector('.a').innerHTML, //目标id
             text: val,
             type: msgType.msg
         }
-        console.log(obj)
         websocket.send(JSON.stringify(obj));
     }
 
 
     window.onunload = function (e) {
-        setTimeout(function () {
-        }, 10000);
-        console.log(document.cookie);
-        // delCookie('_id');
-        console.log(document.cookie);
         var o = {
             sid: global.id,
             type: msgType.close
